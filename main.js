@@ -1,96 +1,32 @@
-const fs = require('fs')
+const Contenedor = require("./Contenedor");
 
-module.exports = class Contenedor {
-  constructor(nombreArchivo) {
-    this.rutaArchivo = `./${nombreArchivo}.txt`
-    this.contID = 1
-  }
+const contenedor = new Contenedor("productos.json");
 
-  async save(obj) {
-    try {
-      let text = ''
-      if (!fs.existsSync(this.rutaArchivo)) {
-        obj.id = this.contID
-        text = JSON.stringify([obj])
-      } else {
-        const content = await this.getAll()
-        if (content.length > 0) {
-          this.contID = content[content.length - 1].id + 1
-        } else {
-          this.contID = 1
-        }
-        obj.id = this.contID
-        text = JSON.stringify([...content, obj])
-      }
-      await fs.promises.writeFile(this.rutaArchivo, text)
-      return obj.id
-    } catch (error) {
-      throw new Error(`Error al escribir el OBJETO: ${JSON.stringify(obj)} en el ARCHIVO: ${this.rutaArchivo} \n\t Más info: ${error.message}`)
-    }
-  }
+const main = async () => {
+  const id1 = await contenedor.save({ title: "Regla", price: 75.66 });
+  const id2 = await contenedor.save({ title: "Goma", price: 57.75 });
+  const id3 = await contenedor.save({ title: "Lapicera", price: 100 });
 
-  async getById(id) {
-    try {
-      const content = await this.getAll()
-      if (content.length > 0) {
-        const obj = content.find(obj => obj.id === id)
-        if (obj) return obj
-      }
-      throw new Error(`Objecto no encontrado con ID: ${id} en el ARCHIVO: ${this.rutaArchivo}`)
-    } catch (error) {
-      throw new Error(`Error al obtener el objeto con ID: ${id} del ARCHIVO: ${this.rutaArchivo} \n\t Más info: ${error.message}`)
-    }
-  }
+  console.log(id1, id2, id3); // 1, 2, 3
 
-  async getAll() {
-    try {
-      if (!fs.existsSync(this.rutaArchivo)) throw new Error(`No se puede leer el ARCHIVO: ${this.rutaArchivo} porque no existe`)
-      const content = await fs.promises.readFile(this.rutaArchivo, 'utf-8')
-      if (!content.length > 0) {
-        await fs.promises.writeFile(this.rutaArchivo, '[]')
-      } else {
-        const array = JSON.parse(content)
-        return array
-      }
-      return []
-    } catch (error) {
-      throw new Error(`Error al leer el ARCHIVO: ${this.rutaArchivo} \n\t Más info: ${error.message}`)
-    }
-  }
+  const object2 = await contenedor.getById(2);
+  console.log(object2); // { title: 'Goma', price: 57.75, id: 2 }
 
-  async deleteById(id) {
-    try {
-      if (!fs.existsSync(this.rutaArchivo)) {
-        throw new Error(`No se puede eliminar el objeto con ID: ${id} del ARCHIVO: ${this.rutaArchivo} porque no existe`)
-      } else {
-        const content = await this.getAll()
-        if (content.length > 0) {
-          const index = content.findIndex(obj => obj.id === id)
-          if (index === -1) {
-            throw new Error(`No se puede eliminar el objeto con ID: ${id} porque no existe en el ARCHIVO: ${this.rutaArchivo}`)
-          } else {
-            content.splice(index, 1)
-            const text = JSON.stringify(content)
-            await fs.promises.writeFile(this.rutaArchivo, text)
-          }
-        }
-      }
-    } catch (error) {
-      throw new Error(`Error al eliminar el objeto con ID: ${id} del ARCHIVO: ${this.rutaArchivo} \n\t Más info: ${error.message}`)
-    }
-  }
+  await contenedor.deleteById(2);
 
-  async deleteAll() {
-    try {
-      if (!fs.existsSync(this.rutaArchivo)) {
-        throw new Error(`No se puede limpiar el ARCHIVO: ${this.rutaArchivo} porque no existe`)
-      } else {
-        await fs.promises.writeFile(this.rutaArchivo, '')
-        console.log(`Se limpió el ARCHIVO: ${this.rutaArchivo}`)
-      }
-    } catch (error) {
-      throw new Error(`Error al limpiar el ARCHIVO: ${this.rutaArchivo} \n\t Más info: ${error.message}`)
-    }
-  }
+  const allCurrentObjects = await contenedor.getAll();
+  console.log(allCurrentObjects);
+  /**
+     * [
+        { title: 'Regla', price: 75.66, id: 1 },
+        { title: 'Lapicera', price: 100, id: 3 }
+        ]
+    */
 
-}
+  //await contenedor.deleteAll();
+};
+
+main();
+
+
+
